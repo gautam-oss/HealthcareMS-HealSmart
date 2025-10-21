@@ -1,0 +1,384 @@
+{% extends 'base.html' %}
+
+{% block title %}Insurance Cost Predictor - HealSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .predictor-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .predictor-header {
+        text-align: center;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .predictor-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 0.8rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .submit-btn {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+        margin-top: 1rem;
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .submit-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .result-card {
+        display: none;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-top: 2rem;
+        text-align: center;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .result-card.show {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .result-amount {
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 1rem 0;
+    }
+
+    .result-breakdown {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        text-align: left;
+    }
+
+    .breakdown-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .breakdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-box {
+        background: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 4px;
+    }
+
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        margin: 1rem 0;
+    }
+
+    .loading-spinner.active {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="predictor-container">
+    <div class="predictor-header">
+        <h1>💰 Insurance Cost Predictor</h1>
+        <p>Estimate your healthcare insurance costs</p>
+    </div>
+
+    <div class="form-card">
+        <div class="info-box">
+            <strong>ℹ️ How it works:</strong> Enter your information below to get an estimated 
+            annual insurance cost based on various health and demographic factors.
+        </div>
+
+        <form id="insuranceForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="age">Age *</label>
+                    <input 
+                        type="number" 
+                        id="age" 
+                        name="age" 
+                        min="18" 
+                        max="100" 
+                        required
+                        placeholder="e.g., 35"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="bmi">BMI (Body Mass Index) *</label>
+                    <input 
+                        type="number" 
+                        id="bmi" 
+                        name="bmi" 
+                        min="10" 
+                        max="60" 
+                        step="0.1" 
+                        required
+                        placeholder="e.g., 24.5"
+                    >
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="children">Number of Children</label>
+                    <input 
+                        type="number" 
+                        id="children" 
+                        name="children" 
+                        min="0" 
+                        max="10" 
+                        value="0"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="smoker">Smoking Status *</label>
+                    <select id="smoker" name="smoker" required>
+                        <option value="">Select...</option>
+                        <option value="no">Non-Smoker</option>
+                        <option value="yes">Smoker</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="region">Region *</label>
+                <select id="region" name="region" required>
+                    <option value="">Select your region...</option>
+                    <option value="northeast">Northeast</option>
+                    <option value="northwest">Northwest</option>
+                    <option value="southeast">Southeast</option>
+                    <option value="southwest">Southwest</option>
+                </select>
+            </div>
+
+            <div class="loading-spinner" id="loading">
+                <p>Calculating... ⏳</p>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                Calculate Insurance Cost
+            </button>
+        </form>
+    </div>
+
+    <div class="result-card" id="resultCard">
+        <h2>Your Estimated Annual Insurance Cost</h2>
+        <div class="result-amount" id="resultAmount">$0</div>
+        <p>This is an estimated cost based on the information provided.</p>
+        
+        <div class="result-breakdown">
+            <h3>Cost Breakdown</h3>
+            <div class="breakdown-item">
+                <span>Base Cost:</span>
+                <span id="baseCost">$0</span>
+            </div>
+            <div class="breakdown-item">
+                <span>Age Factor:</span>
+                <span id="ageFactor">$0</span>
+            </div>
+            <div class="breakdown-item">
+                <span>BMI Factor:</span>
+                <span id="bmiFactor">$0</span>
+            </div>
+            <div class="breakdown-item">
+                <span>Children Factor:</span>
+                <span id="childrenFactor">$0</span>
+            </div>
+            <div class="breakdown-item">
+                <span>Smoking Factor:</span>
+                <span id="smokerFactor">$0</span>
+            </div>
+            <div class="breakdown-item">
+                <span>Region Factor:</span>
+                <span id="regionFactor">$0</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const form = document.getElementById('insuranceForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const loading = document.getElementById('loading');
+    const resultCard = document.getElementById('resultCard');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Get form data
+        const formData = {
+            age: parseInt(document.getElementById('age').value),
+            bmi: parseFloat(document.getElementById('bmi').value),
+            children: parseInt(document.getElementById('children').value),
+            smoker: document.getElementById('smoker').value,
+            region: document.getElementById('region').value
+        };
+
+        // Validate form
+        if (!formData.age || !formData.bmi || !formData.smoker || !formData.region) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        // Show loading, disable button
+        loading.classList.add('active');
+        submitBtn.disabled = true;
+        resultCard.classList.remove('show');
+
+        try {
+            // Call API
+            const response = await fetch('{% url "core:predict_insurance" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            // Hide loading
+            loading.classList.remove('active');
+            submitBtn.disabled = false;
+
+            if (data.success) {
+                // Display results
+                document.getElementById('resultAmount').textContent = 
+                    ' + data.predicted_cost.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                
+                // Display breakdown
+                document.getElementById('baseCost').textContent = 
+                    ' + data.breakdown.base.toLocaleString();
+                document.getElementById('ageFactor').textContent = 
+                    ' + data.breakdown.age_factor.toLocaleString();
+                document.getElementById('bmiFactor').textContent = 
+                    ' + data.breakdown.bmi_factor.toLocaleString();
+                document.getElementById('childrenFactor').textContent = 
+                    ' + data.breakdown.children_factor.toLocaleString();
+                document.getElementById('smokerFactor').textContent = 
+                    ' + data.breakdown.smoker_factor.toLocaleString();
+                document.getElementById('regionFactor').textContent = 
+                    ' + data.breakdown.region_factor.toLocaleString();
+                
+                // Show result card
+                resultCard.classList.add('show');
+                
+                // Scroll to results
+                resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                alert('Error calculating insurance cost. Please try again.');
+            }
+        } catch (error) {
+            loading.classList.remove('active');
+            submitBtn.disabled = false;
+            alert('Something went wrong. Please check your connection and try again.');
+        }
+    });
+
+    // BMI Calculator helper
+    document.getElementById('age').addEventListener('input', function() {
+        if (this.value < 18) {
+            this.value = 18;
+        } else if (this.value > 100) {
+            this.value = 100;
+        }
+    });
+
+    document.getElementById('bmi').addEventListener('input', function() {
+        if (this.value < 10) {
+            this.value = 10;
+        } else if (this.value > 60) {
+            this.value = 60;
+        }
+    });
+</script>
+{% endblock %}

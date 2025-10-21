@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - HealSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero {
+        text-align: center;
+        color: white;
+        padding: 3rem 0;
+    }
+
+    .hero h1 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .hero p {
+        font-size: 1.3rem;
+        margin-bottom: 2rem;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .feature-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        transition: transform 0.3s;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-10px);
+    }
+
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .feature-card h3 {
+        color: #667eea;
+        margin-bottom: 1rem;
+    }
+
+    .feature-card p {
+        color: #666;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>Welcome to HealSmart</h1>
+    <p>Your Complete Healthcare Management Solution</p>
+</div>
+
+<div class="features">
+    <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <h3>AI Healthcare Chatbot</h3>
+        <p>Get quick healthcare advice powered by advanced AI. Ask questions about symptoms, treatments, and general health concerns.</p>
+        <a href="{% url 'core:chatbot' %}" class="btn btn-primary">Start Chat</a>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <h3>Insurance Cost Predictor</h3>
+        <p>Estimate your healthcare insurance costs based on your personal information and lifestyle factors.</p>
+        <a href="{% url 'core:insurance_predictor' %}" class="btn btn-primary">Predict Cost</a>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">🔐</div>
+        <h3>Coming Soon</h3>
+        <p>Patient and Doctor dashboards with appointment management, medical records, and secure communication.</p>
+        <button class="btn btn-secondary" disabled>Phase 2</button>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 3rem; text-align: center;">
+    <h2 style="color: #667eea; margin-bottom: 1rem;">Why Choose HealSmart?</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; margin-top: 2rem;">
+        <div>
+            <h4>🎯 Accurate</h4>
+            <p>AI-powered insights</p>
+        </div>
+        <div>
+            <h4>⚡ Fast</h4>
+            <p>Instant responses</p>
+        </div>
+        <div>
+            <h4>🔒 Secure</h4>
+            <p>Your data is safe</p>
+        </div>
+        <div>
+            <h4>📱 Easy</h4>
+            <p>User-friendly interface</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

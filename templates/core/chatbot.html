@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+
+{% block title %}Healthcare Chatbot - HealSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .chat-header {
+        text-align: center;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .chat-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .chat-box {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        overflow: hidden;
+        height: 600px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .messages {
+        flex: 1;
+        padding: 2rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .message {
+        display: flex;
+        gap: 1rem;
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .message.user {
+        justify-content: flex-end;
+    }
+
+    .message-content {
+        max-width: 70%;
+        padding: 1rem;
+        border-radius: 12px;
+        line-height: 1.5;
+    }
+
+    .message.bot .message-content {
+        background: #f0f0f0;
+        color: #333;
+    }
+
+    .message.user .message-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .message-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .message.bot .message-icon {
+        background: #e3f2fd;
+    }
+
+    .message.user .message-icon {
+        background: #f3e5f5;
+    }
+
+    .input-area {
+        padding: 1.5rem;
+        background: #f8f8f8;
+        display: flex;
+        gap: 1rem;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .input-area input {
+        flex: 1;
+        padding: 1rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+
+    .input-area input:focus {
+        border-color: #667eea;
+    }
+
+    .input-area button {
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .input-area button:hover {
+        transform: scale(1.05);
+    }
+
+    .input-area button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .loading {
+        display: none;
+        text-align: center;
+        color: #666;
+        padding: 1rem;
+    }
+
+    .loading.active {
+        display: block;
+    }
+
+    .disclaimer {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        color: #856404;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <h1>💬 Healthcare Chatbot</h1>
+        <p>Ask me anything about health and wellness!</p>
+    </div>
+
+    <div class="disclaimer">
+        <strong>⚠️ Disclaimer:</strong> This chatbot provides general healthcare information only. 
+        For serious medical concerns, please consult a healthcare professional.
+    </div>
+
+    <div class="chat-box">
+        <div class="messages" id="messages">
+            <div class="message bot">
+                <div class="message-icon">🤖</div>
+                <div class="message-content">
+                    Hello! I'm your healthcare assistant. How can I help you today?
+                </div>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <p>Thinking... 🤔</p>
+        </div>
+
+        <div class="input-area">
+            <input 
+                type="text" 
+                id="userInput" 
+                placeholder="Type your health question here..."
+                autocomplete="off"
+            >
+            <button onclick="sendMessage()" id="sendBtn">Send</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const messagesDiv = document.getElementById('messages');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const loading = document.getElementById('loading');
+
+    // Send message on Enter key
+    userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        
+        if (!message) {
+            return;
+        }
+
+        // Disable input while processing
+        userInput.disabled = true;
+        sendBtn.disabled = true;
+        
+        // Add user message to chat
+        addMessage(message, 'user');
+        userInput.value = '';
+
+        // Show loading
+        loading.classList.add('active');
+
+        try {
+            // Call the API
+            const response = await fetch('{% url "core:chat_api" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+
+            // Hide loading
+            loading.classList.remove('active');
+
+            if (data.success) {
+                addMessage(data.response, 'bot');
+            } else {
+                addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+            }
+        } catch (error) {
+            loading.classList.remove('active');
+            addMessage('Sorry, something went wrong. Please check your internet connection.', 'bot');
+        }
+
+        // Re-enable input
+        userInput.disabled = false;
+        sendBtn.disabled = false;
+        userInput.focus();
+    }
+
+    function addMessage(text, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+        
+        const icon = sender === 'user' ? '👤' : '🤖';
+        
+        messageDiv.innerHTML = `
+            <div class="message-icon">${icon}</div>
+            <div class="message-content">${text}</div>
+        `;
+        
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+</script>
+{% endblock %}
