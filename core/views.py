@@ -2,11 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
-import google.generativeai as genai
 import json
-
-# Configure Gemini API
-genai.configure(api_key=settings.GEMINI_API_KEY)
 
 def home(request):
     """Home page view"""
@@ -25,11 +21,31 @@ def chat_api(request):
     """API endpoint for chatbot - handles Gemini API calls"""
     if request.method == 'POST':
         try:
+            # Parse request data
             data = json.loads(request.body)
             user_message = data.get('message', '')
             
             if not user_message:
-                return JsonResponse({'error': 'No message provided'}, status=400)
+                return JsonResponse({'error': 'No message provided', 'success': False}, status=400)
+            
+            # Check if API key is configured
+            if not settings.GEMINI_API_KEY:
+                return JsonResponse({
+                    'error': 'Gemini API key not configured. Please add GEMINI_API_KEY to your .env file.',
+                    'success': False
+                }, status=500)
+            
+            # Import and configure Gemini
+            try:
+                import google.generativeai as genai
+            except ImportError:
+                return JsonResponse({
+                    'error': 'google-generativeai package not installed. Run: pip install google-generativeai',
+                    'success': False
+                }, status=500)
+            
+            # Configure API
+            genai.configure(api_key=settings.GEMINI_API_KEY)
             
             # Create healthcare-focused prompt
             healthcare_prompt = f"""You are a helpful healthcare assistant. Provide quick, 
@@ -38,22 +54,66 @@ def chat_api(request):
             
             User question: {user_message}"""
             
-            # Call Gemini API
-            model = genai.GenerativeModel('gemini-pro')
-            response = model.generate_content(healthcare_prompt)
+            # Call Gemini API - using the latest stable flash model
+            try:
+                # Use gemini-2.5-flash (stable, fast, and efficient)
+                model = genai.GenerativeModel('gemini-2.5-flash')
+                response = model.generate_content(healthcare_prompt)
+                
+                # Check if response has text
+                if response and response.text:
+                    return JsonResponse({
+                        'response': response.text,
+                        'success': True
+                    })
+                else:
+                    return JsonResponse({
+                        'error': 'Received empty response from AI',
+                        'success': False
+                    }, status=500)
+                    
+            except Exception as api_error:
+                error_message = str(api_error)
+                
+                # Provide helpful error messages
+                if 'API_KEY_INVALID' in error_message or 'invalid api key' in error_message.lower():
+                    return JsonResponse({
+                        'error': 'Invalid API key. Please check your GEMINI_API_KEY in .env file.',
+                        'success': False
+                    }, status=500)
+                elif 'PERMISSION_DENIED' in error_message:
+                    return JsonResponse({
+                        'error': 'API key does not have permission. Please enable Gemini API in Google Cloud Console.',
+                        'success': False
+                    }, status=500)
+                elif 'QUOTA_EXCEEDED' in error_message:
+                    return JsonResponse({
+                        'error': 'API quota exceeded. Please wait or upgrade your API plan.',
+                        'success': False
+                    }, status=500)
+                elif 'not found' in error_message.lower():
+                    return JsonResponse({
+                        'error': f'Model not available. Please check Gemini API documentation for available models.',
+                        'success': False
+                    }, status=500)
+                else:
+                    return JsonResponse({
+                        'error': f'AI API error: {error_message}',
+                        'success': False
+                    }, status=500)
             
+        except json.JSONDecodeError:
             return JsonResponse({
-                'response': response.text,
-                'success': True
-            })
-            
+                'error': 'Invalid JSON data',
+                'success': False
+            }, status=400)
         except Exception as e:
             return JsonResponse({
-                'error': str(e),
+                'error': f'Server error: {str(e)}',
                 'success': False
             }, status=500)
     
-    return JsonResponse({'error': 'Invalid request method'}, status=405)
+    return JsonResponse({'error': 'Invalid request method', 'success': False}, status=405)
 
 @csrf_exempt
 def predict_insurance(request):
@@ -129,4 +189,4 @@ def predict_insurance(request):
                 'success': False
             }, status=500)
     
-    return JsonResponse({'error': 'Invalid request method'}, status=405)
+    return JsonResponse({'error': 'Invalid request method', 'success': False}, status=405)

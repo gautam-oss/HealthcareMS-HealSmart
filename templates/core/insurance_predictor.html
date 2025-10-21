@@ -330,24 +330,24 @@
             if (data.success) {
                 // Display results
                 document.getElementById('resultAmount').textContent = 
-                    ' + data.predicted_cost.toLocaleString('en-US', {
+                    '$' + data.predicted_cost.toLocaleString('en-US', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
                 
                 // Display breakdown
                 document.getElementById('baseCost').textContent = 
-                    ' + data.breakdown.base.toLocaleString();
+                    '$' + data.breakdown.base.toLocaleString();
                 document.getElementById('ageFactor').textContent = 
-                    ' + data.breakdown.age_factor.toLocaleString();
+                    '$' + data.breakdown.age_factor.toLocaleString();
                 document.getElementById('bmiFactor').textContent = 
-                    ' + data.breakdown.bmi_factor.toLocaleString();
+                    '$' + data.breakdown.bmi_factor.toLocaleString();
                 document.getElementById('childrenFactor').textContent = 
-                    ' + data.breakdown.children_factor.toLocaleString();
+                    '$' + data.breakdown.children_factor.toLocaleString();
                 document.getElementById('smokerFactor').textContent = 
-                    ' + data.breakdown.smoker_factor.toLocaleString();
+                    '$' + data.breakdown.smoker_factor.toLocaleString();
                 document.getElementById('regionFactor').textContent = 
-                    ' + data.breakdown.region_factor.toLocaleString();
+                    '$' + data.breakdown.region_factor.toLocaleString();
                 
                 // Show result card
                 resultCard.classList.add('show');
