@@ -1,39 +1,21 @@
-# Python
-*.py[cod]
-*$py.class
-*.so
-.Python
-__pycache__/
-*.pyc
-
-# Virtual Environment
-venv/
-env/
-ENV/
-
-# Django
-*.log
-db.sqlite3
-db.sqlite3-journal
-/media
-/staticfiles
-/static
-
-# Environment variables
+# Environment
 .env
 .env.local
+venv/
+env/
+
+# Django
+*.pyc
+__pycache__/
+db.sqlite3
+*.log
+staticfiles/
+media/
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
 
 # OS
 .DS_Store
 Thumbs.db
-
-# Migrations (optional - you can track these)
-# */migrations/*.py
-# !*/migrations/__init__.py

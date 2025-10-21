@@ -91,3 +91,58 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Gemini API Configuration
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+
+# ===================================================================
+# Production settings (added as per instruction)
+# ===================================================================
+
+import os
+from pathlib import Path
+
+# Production settings
+if os.environ.get('RAILWAY_ENVIRONMENT') == 'production':
+    # Security settings
+    DEBUG = False
+    ALLOWED_HOSTS = [
+        '.railway.app',
+        '.up.railway.app',
+        'localhost',
+        '127.0.0.1',
+    ]
+    
+    # Add your custom domain when you get one
+    # ALLOWED_HOSTS.append('yourdomain.com')
+    
+    # Security middleware
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    
+    # Static files with WhiteNoise
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    
+    # Database - PostgreSQL on Railway
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600
+        )
+    }
+else:
+    # Development settings (keep existing)
+    DEBUG = config('DEBUG', default=True, cast=bool)
+    ALLOWED_HOSTS = []
+
+# Static files
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else []
+
+# Media files
+MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
